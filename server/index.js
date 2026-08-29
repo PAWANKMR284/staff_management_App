@@ -1,0 +1,37 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const db = require('./db');
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/leave', require('./routes/leave'));
+app.use('/api/attendance', require('./routes/attendance'));
+app.use('/api/payroll', require('./routes/payroll'));
+app.use('/api/reports', require('./routes/reports'));
+
+// Basic Route for testing
+app.get('/', (req, res) => {
+    res.send('ShiftMark Server is running...');
+});
+
+// Test Database Connection Route
+app.get('/test-db', async (req, res) => {
+    try {
+        const [rows] = await db.query('SELECT 1 + 1 AS result');
+        res.json({ message: 'Database Connected Successfully!', result: rows });
+    } catch (err) {
+        res.status(500).json({ error: 'Database Connection Failed', details: err.message });
+    }
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
