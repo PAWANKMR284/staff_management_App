@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const auth = require('../middleware/auth');
 
 // --- CHECK-IN API ---
-router.post('/check-in', async (req, res) => {
-    const { user_id, latitude, longitude, type } = req.body;
+router.post('/check-in', auth, async (req, res) => {
+    const { latitude, longitude, type } = req.body;
+    const user_id = req.user.id; // Get ID from Token, not body
     const now = new Date();
 
     try {
-        // Check if already checked in today
         const [existing] = await db.query(
             'SELECT * FROM attendance WHERE user_id = ? AND DATE(check_in) = CURDATE()',
             [user_id]
@@ -31,8 +32,8 @@ router.post('/check-in', async (req, res) => {
 });
 
 // --- CHECK-OUT API ---
-router.post('/check-out', async (req, res) => {
-    const { user_id } = req.body;
+router.post('/check-out', auth, async (req, res) => {
+    const user_id = req.user.id;
 
     try {
         const [record] = await db.query(
@@ -50,7 +51,11 @@ router.post('/check-out', async (req, res) => {
 });
 
 // --- GET TODAY'S STATUS ---
-router.get('/status/:userId', async (req, res) => {
+router.get('/status/:userId', auth, async (req, res) => {
+    // Basic verification: user can only see their own status, unless admin
+    if (req.user.role !== 'admin' && req.user.id != req.params.userId) {
+        return res.status(403).json({ message: 'Access denied' });
+    }
     try {
         const [rows] = await db.query(
             'SELECT * FROM attendance WHERE user_id = ? AND DATE(check_in) = CURDATE()',

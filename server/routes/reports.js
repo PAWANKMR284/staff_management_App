@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const auth = require('../middleware/auth');
 
 // --- GET ATTENDANCE TRENDS (Admin) ---
-router.get('/attendance-trends', async (req, res) => {
+router.get('/attendance-trends', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
     try {
         // Calculate attendance rate for the last 4 weeks
         const trends = [];

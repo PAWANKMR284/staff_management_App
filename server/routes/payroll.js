@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const auth = require('../middleware/auth');
 
 // --- CALCULATE PAYROLL FOR ALL (Admin) ---
-router.get('/calculate/:month/:year', async (req, res) => {
+router.get('/calculate/:month/:year', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
     const { month, year } = req.params;
 
     try {
@@ -50,7 +52,8 @@ router.get('/calculate/:month/:year', async (req, res) => {
 });
 
 // --- SAVE/APPROVE PAYROLL (Admin) ---
-router.post('/approve', async (req, res) => {
+router.post('/approve', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
     const { payrolls } = req.body;
 
     try {
